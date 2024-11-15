@@ -2,18 +2,25 @@ package lexer
 
 import (
 	"dominionlang/token"
+	"log"
+	"os"
 	"strings"
 )
 
 type Lexer struct {
-	input        string
-	position     int
-	readPosition int
-	currentChar  byte
+	input         string
+	position      int
+	readPosition  int
+	currentChar   byte
+	literalReader LiteralReader
 }
 
-func New(input string) *Lexer {
-	l := &Lexer{input: input}
+type LiteralReader interface {
+	ReadLiteral(input string) string
+}
+
+func NewLexer(input string, literalReader LiteralReader) *Lexer {
+	l := &Lexer{input: input, literalReader: literalReader}
 	return l
 }
 
@@ -31,20 +38,17 @@ func (l *Lexer) readChar() {
 
 func (l *Lexer) NextToken() token.Token {
 	l.skipWhitespace()
-	literal := string(l.currentChar)
-	tokenGenerator, ok := tokenMap[literal]
 
-	if !ok {
-		return token.Token{Type: token.ILLEGAL, Literal: literal}
+	literal := l.readTokenLiteral()
+
+	tokenGenerator, err := GetTokenGenerator(literal)
+
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
 	}
 
-	if isLetter(l.currentChar) {
-		literal = l.readUntilWhitespace()
-	} else {
-		l.readChar()
-	}
-
-	return tokenGenerator(l.nextChar())
+	return tokenGenerator(literal)
 }
 
 func (l *Lexer) nextChar() byte {
@@ -52,6 +56,14 @@ func (l *Lexer) nextChar() byte {
 		return l.input[l.readPosition+1]
 	}
 	return 0
+}
+
+func (l *Lexer) readTokenLiteral() string {
+	literal := l.literalReader.ReadLiteral(l.input[l.readPosition:len(l.input)])
+
+	l.readPosition += len(literal)
+
+	return literal
 }
 
 func (l *Lexer) readUntilWhitespace() string {
@@ -73,8 +85,4 @@ func (l *Lexer) skipWhitespace() {
 
 func isWhitespace(char byte) bool {
 	return char == ' ' || char == '\t' || char == '\n' || char == '\r'
-}
-
-func isLetter(ch byte) bool {
-	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
 }

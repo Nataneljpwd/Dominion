@@ -18,6 +18,7 @@ const (
 	MULT     = "*"
 	DIVIDE   = "/"
 	MODULO   = "%"
+	COMPARE  = "=="
 
 	// Delimiters
 	COMMA   = ","
@@ -33,6 +34,5 @@ const (
 	FUNCTION = "FUNCTION"
 	LET      = "LET"
 	EMPIRE   = "EMPIRE" // the keyword for variables that persist between runs (using the metadata of the file probably)
-	MMS      = "MMS"    // the keyword for constant variables
-
+	MMS      = "MAMAS"  // the keyword for constant variables
 )

@@ -2,24 +2,59 @@ package lexer
 
 import (
 	"dominionlang/token"
+	"dominionlang/utils"
+	"errors"
+	"fmt"
 )
 
-type tokenGenerator func(nextChar byte) token.Token
+type TokenGenerator func(nextChar string) token.Token
 
-var tokenMap = map[string]tokenGenerator{
-	",": func(_ byte) token.Token { return newToken(token.COMMA, ",") },
-	";": func(_ byte) token.Token { return newToken(token.SEMICOL, ";") },
-	"+": func(_ byte) token.Token { return newToken(token.ADD, "+") },
-	"-": func(_ byte) token.Token { return newToken(token.SUBTRACT, "-") },
-	"/": func(_ byte) token.Token { return newToken(token.DIVIDE, "/") },
-	"*": func(_ byte) token.Token { return newToken(token.MULT, "*") },
-	"%": func(_ byte) token.Token { return newToken(token.MODULO, "%") },
-	"(": func(_ byte) token.Token { return newToken(token.LPAREN, "(") },
-	")": func(_ byte) token.Token { return newToken(token.RPAREN, ")") },
-	"{": func(_ byte) token.Token { return newToken(token.LBRACE, "{") },
-	"}": func(_ byte) token.Token { return newToken(token.RBRACE, "}") },
+var tokenMap = map[string]TokenGenerator{
+	token.COMMA:    func(_ string) token.Token { return newToken(token.COMMA, ",") },
+	token.ASSIGN:   func(_ string) token.Token { return newToken(token.ASSIGN, "=") },
+	token.COMPARE:  func(_ string) token.Token { return newToken(token.COMPARE, "==") },
+	token.SEMICOL:  func(_ string) token.Token { return newToken(token.SEMICOL, ";") },
+	token.ADD:      func(_ string) token.Token { return newToken(token.ADD, "+") },
+	token.SUBTRACT: func(_ string) token.Token { return newToken(token.SUBTRACT, "-") },
+	token.DIVIDE:   func(_ string) token.Token { return newToken(token.DIVIDE, "/") },
+	token.MULT:     func(_ string) token.Token { return newToken(token.MULT, "*") },
+	token.MODULO:   func(_ string) token.Token { return newToken(token.MODULO, "%") },
+	token.LPAREN:   func(_ string) token.Token { return newToken(token.LPAREN, "(") },
+	token.RPAREN:   func(_ string) token.Token { return newToken(token.RPAREN, ")") },
+	token.LBRACE:   func(_ string) token.Token { return newToken(token.LBRACE, "{") },
+	token.RBRACE:   func(_ string) token.Token { return newToken(token.RBRACE, "}") },
+	token.EOF:      func(_ string) token.Token { return newToken(token.EOF, "") },
 }
 
 func newToken(tokenType token.TokenType, literal string) token.Token {
 	return token.Token{Type: tokenType, Literal: literal}
+}
+
+func GetTokenGenerator(literal string) (TokenGenerator, error) {
+	if len(literal) == 0 {
+		return tokenMap[token.EOF], nil
+	}
+
+	if utils.IsLetter(literal) {
+		return newIdentToken, nil
+	}
+
+	tokenGenerator, ok := tokenMap[literal]
+	fmt.Println("Testing ", literal)
+
+	if !ok {
+		for key := range tokenMap {
+			fmt.Println(key, literal)
+			fmt.Println(key == literal)
+			fmt.Println(len(key), len(literal))
+		}
+		return nil, errors.New(fmt.Sprintf("Invalid token, Got '%s'", literal))
+	}
+
+	fmt.Println()
+	return tokenGenerator, nil
+}
+
+func newIdentToken(literal string) token.Token {
+	return newToken(token.IDENT, literal)
 }
